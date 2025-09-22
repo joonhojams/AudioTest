@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build portaudio app",
+      "type": "shell",
+      "command": "gcc",
+      "args": [
+        "main.c",                // your source file
+        "-o", "main",            // output binary
+        "-I/opt/homebrew/opt/portaudio/include",
+        "-L/opt/homebrew/opt/portaudio/lib",
+        "-lportaudio"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$gcc"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug PortAudio App",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/main",   // the compiled binary
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "MIMode": "lldb",                       // macOS debugger
+      "externalConsole": true,
+      "preLaunchTask": "build portaudio app"  // runs tasks.json before launching
+    }
+  ]
+}
