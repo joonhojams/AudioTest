@@ -2,6 +2,9 @@
 #include <math.h>
 #include <portaudio.h>
 
+// set to 2 for stereo input/output
+#define CHANNELS (1)
+
 int inputAudioDevice =  -1; // audio device to stream input from
 int outputAudioDevice =  -1; // audio device to stream output to
 
@@ -36,12 +39,12 @@ int blocking(void){
     PaStreamParameters outputParameters;
     PaStreamParameters inputParameters;
     inputParameters.device = inputAudioDevice;
-    inputParameters.channelCount = Pa_GetDeviceInfo(inputAudioDevice)->maxInputChannels;
+    inputParameters.channelCount = CHANNELS;
     inputParameters.sampleFormat = paFloat32;
     inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultHighInputLatency ;
     inputParameters.hostApiSpecificStreamInfo = NULL;
     outputParameters.device = outputAudioDevice;
-    outputParameters.channelCount = Pa_GetDeviceInfo(outputAudioDevice)->maxInputChannels;
+    outputParameters.channelCount = CHANNELS;
     outputParameters.sampleFormat = paFloat32;
     outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultHighOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;

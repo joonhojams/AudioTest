@@ -2,14 +2,25 @@
 #include <math.h>
 #include <portaudio.h>
 
-// a callback function is called by the PortAudio engine whenever audio is captured or is needed
-// MUST return an int and accept the EXACT parameters as shown below
+// set to 2 for stereo input/output
+#define CHANNELS (1)
+
+
+// a callback function is called by the PortAudio engine whenever audio is captured or is needed.
+// MUST return an int and accept the EXACT parameters as shown below.
+// From PortAudio docs:
+/* This routine will be called by the PortAudio engine when audio is needed.
+** It may be called at interrupt level on some machines so don't do anything
+** that could mess up the system like calling malloc() or free().
+*/
 static int PaStreamCallback( const void *input,
                                       void *output,
                                       unsigned long frameCount,
                                       const PaStreamCallbackTimeInfo* timeInfo,
                                       PaStreamCallbackFlags statusFlags,
-                                      void *userData ) ;
+                                      void *userData ) {
+    paTestData *data = (paTestData*)userData;
+                                      }
 
                                       
 typedef struct
@@ -47,14 +58,14 @@ int main(void) {
     PaStreamParameters outputParameters;
     PaStreamParameters inputParameters;
     bzero( &inputParameters, sizeof( inputParameters ) ); //not necessary if you are filling in all the fields
-    inputParameters.channelCount = Pa_GetDeviceInfo(inputAudioDevice)->maxInputChannels;
+    inputParameters.channelCount = CHANNELS;
     inputParameters.device = inputAudioDevice;
     inputParameters.hostApiSpecificStreamInfo = NULL;
     inputParameters.sampleFormat = paFloat32;
     inputParameters.suggestedLatency = Pa_GetDeviceInfo(inputAudioDevice)->defaultLowInputLatency ;
     inputParameters.hostApiSpecificStreamInfo = NULL; //See you specific host's API docs for info on using this field
     bzero( &outputParameters, sizeof( outputParameters ) ); //not necessary if you are filling in all the fields
-    outputParameters.channelCount = Pa_GetDeviceInfo(outputAudioDevice)->maxOutputChannels;
+    outputParameters.channelCount = CHANNELS;
     outputParameters.device = outputAudioDevice;
     outputParameters.hostApiSpecificStreamInfo = NULL;
     outputParameters.sampleFormat = paFloat32;
