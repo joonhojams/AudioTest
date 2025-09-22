@@ -16,7 +16,6 @@ Note that not all API's implement Blocking I/O at this point, so for maximum por
 */
 
 int blocking(void){
-    PaStream *stream;
     PaError err;
 
     /* -- initialize PortAudio -- */
@@ -51,8 +50,8 @@ int blocking(void){
             &stream,
             &inputParameters,
             &outputParameters,
-            SAMPLE_RATE,
-            FRAMES_PER_BUFFER,
+            srate,
+            framesPerBuffer,
             paClipOff,      /* we won't output out of range samples so don't bother clipping them */
             NULL, /* no callback, use blocking API */
             NULL ); /* no callback, so no callback userData */
@@ -62,11 +61,11 @@ int blocking(void){
     if( err != paNoError ) goto error;
     printf("Wire on. Will run one minute.\n"); fflush(stdout);
     /* -- Here's the loop where we pass data from input to output -- */
-    for( i=0; i<(60*SAMPLE_RATE)/FRAMES_PER_BUFFER; ++i )
+    for( i=0; i<(60*srate)/framesPerBuffer; ++i )
     {
-    err = Pa_WriteStream( stream, sampleBlock, FRAMES_PER_BUFFER );
+    err = Pa_WriteStream( stream, sampleBlock, framesPerBuffer );
     if( err ) goto xrun;
-    err = Pa_ReadStream( stream, sampleBlock, FRAMES_PER_BUFFER );
+    err = Pa_ReadStream( stream, sampleBlock, framesPerBuffer );
     if( err ) goto xrun;
     }
     /* -- Now we stop the stream -- */
