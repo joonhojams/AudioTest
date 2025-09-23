@@ -15,6 +15,7 @@ typedef struct
 }   
 paTestData;
 
+// DELAY
 // for delay, we will use a CIRCULAR buffer:
     // - think circular array, but ALSO sliding window
     // - there is a READ (delayed output) pointer/index and a WRITE (input) pointer/index
@@ -24,7 +25,6 @@ paTestData;
 int delayMaxLen = SAMPLE_RATE; // max delay length (by setting to SAMPLE_RATE, it is 1 second)
 float delayBuffer[SAMPLE_RATE]; // the buffer (an array of floats, since floats are what will be stored)
 // for a dynamic buffer: float *delayBuffer = malloc(SAMPLE_RATE * sizeof(float));
-int delayOn = 1; // 1 for on, 0 for off
 int delayCurr = 0; // index of input signal in delayBuffer, where audio is being WRITTEN
 
 // input - signal, preferrably the wet one, not the dry one
@@ -39,12 +39,16 @@ static float delay(float input, float feedback, float length){
     return output;
 }
 
-static float distortion(float input, float gain){
+// DISTORTION/FUZZ
+// input - signal, preferrably dry
+// gain - from 1.0f - 100.0f, a multiplier to input signal to feed into output 
+// asym - from 0.0f - 1.0f, what % of input signal to add to input (before saturation) to offset asymmetrically
+static float distortion(float input, float gain, float asym){
     float output;
     input *= gain; // not entirely sure why this is useful but it works, just like a gain knob ig
 
     // fuzz algo
-    input += input*0.8f; // asymmetry
+    input += input*asym; // asymmetry
     output = input / (1.0f + fabs(input)); // saturation
 
     return output;
@@ -86,7 +90,7 @@ static int PaPedalCallback( const void *input, // the buffer allocated for input
 
             out[i] = 0; // clearing the data stored here
             // out[i] += sample; // dry
-            out[i] += distortion(sample, 75.0f); // fuzz
+            out[i] += distortion(sample, 75.0f, 0.8f); // fuzz
 
             out[i] += delay(out[i], 0.3f, 0.4f); // delay (wet only, hence +=)
 
