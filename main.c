@@ -15,45 +15,37 @@ typedef struct
 }   
 paTestData;
 
-// DELAY
-// for delay, we will use a CIRCULAR buffer:
+// REVERSE
+// we will use a CIRCULAR buffer:
     // - think circular array, but ALSO sliding window
     // - there is a READ (delayed output) pointer/index and a WRITE (input) pointer/index
     // - both indices loop to start of buffer once end is reached
-    // - max delay time is determined by the size of the buffer
-// Variables for delay
-int delayMaxLen = SAMPLE_RATE; // max delay length (by setting to SAMPLE_RATE, it is 1 second)
-float delayBuffer[SAMPLE_RATE]; // the buffer (an array of floats, since floats are what will be stored)
-// for a dynamic buffer: float *delayBuffer = malloc(SAMPLE_RATE * sizeof(float));
-int delayCurr = 0; // index of input signal in delayBuffer, where audio is being WRITTEN
+// Variables for REVERSE
+int const revMaxLen = SAMPLE_RATE*5; // max recording length (by setting to SAMPLE_RATE*5, we get 5 seconds)
+float buffer[revMaxLen]; // the buffer (an array of floats, since floats are what will be stored)
+// for a dynamic buffer: float *buffer = malloc(SAMPLE_RATE * sizeof(float));
+int index = 0; // index of input signal in buffer, where audio is being WRITTEN
+int reverseIndex = 0; // keeps track of how long user has held down the reverse switch for
+char reverseOn = 0; // needs to be mapped to physical hardware input
 
-// input - signal, preferrably the wet one, not the dry one
-// feedback - from 0.0f -> 1.0f, how much of the signal to preserve every delay
-// length - in seconds (max 1.0f)
-static float delay(float input, float feedback, float length){
-    float output;
-    int past = (delayCurr - (int)(SAMPLE_RATE*length) + delayMaxLen) % delayMaxLen; // index of past audio. modulo and '+ delayMaxLen' ensures buffer stays CIRCULAR
-    output = delayBuffer[past]; // actual signal from delay
-    delayBuffer[delayCurr] = input + output*feedback; // write input signal into delay buffer
-    delayCurr = (delayCurr + 1) % delayMaxLen; // modulo ensures buffer stays CIRCULAR
+// input - signal, preferrably the effected one, not the dry one
+// toggle - 1 for WRITING FORWARDS, -1 for READING in REVERSE, 0 for OFF
+static float reverse(float input, int toggle){
+    float output;    
+    if (toggle == 1) {
+        // WRITE FORWARDS
+        buffer[index] = input; // WRITE input signal into reverse buffer
+        index++;
+        index %= revMaxLen; // ensures circular behavior
+    } else if (toggle == -1){
+        // READ BACKWARDS
+        output = buffer[index]; // READ from saved buffer into output
+        index--;
+        index += revMaxLen; // since moving in negative direction
+        index %= revMaxLen; // ensures circular behavior
+    }
     return output;
 }
-
-// DISTORTION/FUZZ
-// input - signal, preferrably dry
-// gain - from 1.0f - 100.0f, a multiplier to input signal to feed into output 
-// asym - from 0.0f - 1.0f, what % of input signal to add to input (before saturation) to offset asymmetrically
-static float distortion(float input, float gain, float asym){
-    float output;
-    input *= gain; // not entirely sure why this is useful but it works, just like a gain knob ig
-
-    // fuzz algo
-    input += input*asym; // asymmetry
-    output = input / (1.0f + fabs(input)); // saturation
-
-    return output;
-}
-
 // unfortunately I have no idea what this is, stole it from pa_fuzz.c
 static int gNumNoInputs = 0;
 
@@ -89,10 +81,14 @@ static int PaPedalCallback( const void *input, // the buffer allocated for input
             SAMPLE sample = in[i]; // MONO input
 
             out[i] = 0; // clearing the data stored here
-            // out[i] += sample; // dry
-            out[i] += distortion(sample, 75.0f, 0.8f); // fuzz
-
-            out[i] += delay(out[i], 0.3f, 0.4f); // delay (wet only, hence +=)
+            if (reverseOn) {
+                reverseIndex++;
+                out[i] = reverse(sample, 1);
+            } else if (reverseIndex < 0) {
+                reverseIndex--;
+                out[i] = reverse(sample, -1);
+            }
+            
 
             
         }
